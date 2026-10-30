@@ -1,26 +1,26 @@
 const parrafo = document.getElementById("parrafo");
 const boton = document.getElementById("btn");
 
-function mostrarMotion(event) {
-  const acc = event.accelerationIncludingGravity; // más fiable
-  const rot = event.rotationRate;
+function mostrarOrientacion(event) {
 
   parrafo.innerHTML = `
-    Rotación:<br>
-    Alpha: ${rot.alpha}
-    Beta: ${rot.beta}
+    Orientación:<br>
+    Alpha: ${event.alpha?.toFixed(1) ?? 'N/A'}°<br>
+    Beta: ${event.beta?.toFixed(1)}°
   `;
 }
 
 function requestPermission() {
-  console.log("Has pulsado el botón");
+  console.log("última versión");
 
-  if (typeof DeviceMotionEvent !== 'undefined' &&
-      typeof DeviceMotionEvent.requestPermission === 'function') {
-    DeviceMotionEvent.requestPermission()
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    
+    // iOS 13+
+    DeviceOrientationEvent.requestPermission()
       .then(state => {
         if (state === 'granted') {
-          window.addEventListener('devicemotion', mostrarMotion);
+          window.addEventListener('deviceorientation', mostrarOrientacion);
           console.log('Permiso concedido');
         } else {
           console.error('Permiso denegado');
@@ -33,7 +33,8 @@ function requestPermission() {
       });
 
   } else {
-    window.addEventListener('devicemotion', mostrarMotion);
+    // Android y navegadores que no necesitan permiso
+    window.addEventListener('deviceorientation', mostrarOrientacion);
     console.log('Listener añadido (no iOS)');
   }
 }
