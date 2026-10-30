@@ -1,33 +1,41 @@
-const div = document.getElementById("circle");
 const parrafo = document.getElementById("parrafo");
-function mostrarOrientacion(event) {
-  parrafo.innerHTML = (event.acceleration, event.rotationRate);
+const boton = document.getElementById("btn");
+
+function mostrarMotion(event) {
+  const acc = event.accelerationIncludingGravity; // más fiable
+  const rot = event.rotationRate;
+
+  parrafo.innerHTML = `
+    Rotación:<br>
+    Alpha: ${rot.alpha}
+    Beta: ${rot.beta}
+  `;
 }
 
 function requestPermission() {
-  // iOS 13+
-  if (typeof DeviceMotionEvent !== 'undefined' && 
+  console.log("Has pulsado el botón");
+
+  if (typeof DeviceMotionEvent !== 'undefined' &&
       typeof DeviceMotionEvent.requestPermission === 'function') {
-    
     DeviceMotionEvent.requestPermission()
       .then(state => {
         if (state === 'granted') {
-          window.addEventListener('devicemotion', handleMotion);
+          window.addEventListener('devicemotion', mostrarMotion);
           console.log('Permiso concedido');
         } else {
           console.error('Permiso denegado');
+          parrafo.textContent = "Permiso denegado";
         }
       })
-      .catch(console.error);
+      .catch(err => {
+        console.error(err);
+        parrafo.textContent = "Error al pedir permiso";
+      });
 
   } else {
-    // Android y navegadores que no necesitan permiso
-    window.addEventListener('devicemotion', mostrarOrientacion);
+    window.addEventListener('devicemotion', mostrarMotion);
+    console.log('Listener añadido (no iOS)');
   }
 }
 
-// Obligatorio: se tiene que llamar desde un gesto del usuario
-let boton = document.getElementById("btn");
 boton.addEventListener('click', requestPermission);
-// o también con touch:
-// div.addEventListener('touchend', requestPermission);
