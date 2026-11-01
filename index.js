@@ -1,101 +1,53 @@
 
-const parrafo = document.getElementById("parrafo");
-const boton = document.getElementById("btn");
 const circle = document.getElementById("circle");
+const boton = document.getElementById("btn");
 
-let escuchando = false;
-let betaInicial = null;
-let gammaInicial = null;
+let x = window.innerWidth / 2 - 30;
+let y = window.innerHeight / 2 - 30;
 
-function limitar(valor, minimo, maximo) {
-    return Math.max(minimo, Math.min(maximo, valor));
-}
+function moverCirculo(event) {
 
-function mostrarOrientacion(event) {
+    if (event.gamma === null || event.beta === null) return;
 
-    // Comprobar que el móvil está enviando datos
-    if (event.beta === null || event.gamma === null) {
-        parrafo.innerHTML = "El sensor no está enviando datos.";
-        return;
-    }
+    const ancho = window.innerWidth - 60;
+    const alto = window.innerHeight - 60;
 
-    // Guardamos la orientación inicial
-    if (betaInicial === null) {
-        betaInicial = event.beta;
-        gammaInicial = event.gamma;
-    }
+    x = Math.max(0, Math.min(ancho,
+        x + event.gamma * 0.8
+    ));
 
-    // Calculamos la inclinación respecto a la posición inicial
-    const beta = event.beta - betaInicial;
-    const gamma = event.gamma - gammaInicial;
+    y = Math.max(0, Math.min(alto,
+        y + event.beta * 0.8
+    ));
 
-    // Limitamos el movimiento del círculo
-    const movimientoX = limitar(gamma * 2, -90, 90);
-    const movimientoY = limitar(beta * 2, -90, 90);
-
-    // Movemos el círculo
     circle.style.transform =
-        `translate(${movimientoX}px, ${movimientoY}px)`;
-
-    // Mostramos los datos
-    parrafo.innerHTML = `
-        <strong>Sensor conectado</strong><br>
-        Alpha: ${event.alpha?.toFixed(1) ?? "N/A"}°<br>
-        Beta: ${event.beta.toFixed(1)}°<br>
-        Gamma: ${event.gamma.toFixed(1)}°
-    `;
+        `translate(${x}px, ${y}px)`;
 }
 
-function iniciarSensor() {
+async function activar() {
 
-    if (escuchando) return;
-
-    if (typeof DeviceOrientationEvent === "undefined") {
-        parrafo.textContent = "Tu navegador no admite este sensor.";
-        return;
-    }
-
-    window.addEventListener(
-        "deviceorientation",
-        mostrarOrientacion
-    );
-
-    escuchando = true;
-
-    boton.textContent = "Sensor activado";
-    boton.disabled = true;
-
-    parrafo.textContent = "Esperando datos del móvil...";
-}
-
-function requestPermission() {
-
-    if (escuchando) return;
-
-    // Comprobar si el navegador necesita permiso
     if (
         typeof DeviceOrientationEvent !== "undefined" &&
         typeof DeviceOrientationEvent.requestPermission === "function"
     ) {
+        try {
+            const permiso =
+                await DeviceOrientationEvent.requestPermission();
 
-        DeviceOrientationEvent.requestPermission()
-            .then(permission => {
+            if (permiso !== "granted") return;
 
-                if (permission === "granted") {
-                    iniciarSensor();
-                } else {
-                    parrafo.textContent = "Permiso denegado.";
-                }
-
-            })
-            .catch(error => {
-                console.error(error);
-                parrafo.textContent = "No se pudo activar el sensor.";
-            });
-
-    } else {
-        iniciarSensor();
+        } catch (error) {
+            console.error(error);
+            return;
+        }
     }
+
+    window.addEventListener(
+        "deviceorientation",
+        moverCirculo
+    );
+
+    boton.style.display = "none";
 }
 
-boton.addEventListener("click", requestPermission);
+boton.addEventListener("click", activar);
