@@ -1,42 +1,50 @@
+
 const parrafo = document.getElementById("parrafo");
 const boton = document.getElementById("btn");
 
-function mostrarOrientacion(event) {
+let escuchando = false;
 
+function mostrarOrientacion(event) {
   parrafo.innerHTML = `
     Orientación:<br>
-    Alpha: ${event.alpha?.toFixed(1) ?? 'N/A'}°<br>
-    Beta: ${event.beta?.toFixed(1)}°
+    Alpha: ${event.alpha !== null ? event.alpha.toFixed(1) : 'N/A'}°<br>
+    Beta: ${event.beta !== null ? event.beta.toFixed(1) : 'N/A'}°<br>
+    Gamma: ${event.gamma !== null ? event.gamma.toFixed(1) : 'N/A'}°
   `;
 }
 
 function requestPermission() {
-  console.log("última versión");
+  if (escuchando) return;
 
-  if (typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function') {
-    
-    // iOS 13+
+  if (
+    typeof DeviceOrientationEvent !== 'undefined' &&
+    typeof DeviceOrientationEvent.requestPermission === 'function'
+  ) {
     DeviceOrientationEvent.requestPermission()
       .then(state => {
         if (state === 'granted') {
-          window.addEventListener('deviceorientation', mostrarOrientacion);
-          console.log('Permiso concedido');
+          iniciarSensor();
         } else {
-          console.error('Permiso denegado');
           parrafo.textContent = "Permiso denegado";
         }
       })
-      .catch(err => {
-        console.error(err);
+      .catch(error => {
+        console.error(error);
         parrafo.textContent = "Error al pedir permiso";
       });
-
   } else {
-    // Android y navegadores que no necesitan permiso
-    window.addEventListener('deviceorientation', mostrarOrientacion);
-    console.log('Listener añadido (no iOS)');
+    iniciarSensor();
   }
+}
+
+function iniciarSensor() {
+  window.addEventListener(
+    'deviceorientation',
+    mostrarOrientacion
+  );
+
+  escuchando = true;
+  parrafo.textContent = "Esperando datos del sensor...";
 }
 
 boton.addEventListener('click', requestPermission);
